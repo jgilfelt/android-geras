@@ -8,8 +8,9 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.readystatesoftware.android.geras.app.MainActivity">
 
-    <TextView
-        android:text="@string/hello_world"
+    <Button
+        android:id="@+id/startstop"
+        android:text="Start/Stop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 

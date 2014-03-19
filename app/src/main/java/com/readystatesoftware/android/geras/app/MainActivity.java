@@ -4,14 +4,36 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+
+import com.readystatesoftware.android.geras.mqtt.Geras;
+import com.readystatesoftware.android.geras.mqtt.GerasMQTTService;
 
 
 public class MainActivity extends Activity {
+
+    Button startStop;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final Geras geras = new Geras(getString(R.string.geras_api_key));
+
+        startStop = (Button) findViewById(R.id.startstop);
+        startStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!GerasMQTTService.isRunning()) {
+                    geras.startService(MainActivity.this);
+                } else {
+                    geras.stopService(MainActivity.this);
+                }
+            }
+        });
+
     }
 
 
