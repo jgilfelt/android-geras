@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="ghostlog-integration-1.0.3">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/app/build/exploded-aar/com.readystatesoftware.ghostlog/ghostlog-integration/1.0.3/res" />
+      <root url="jar://$PROJECT_DIR$/app/build/exploded-aar/com.readystatesoftware.ghostlog/ghostlog-integration/1.0.3/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

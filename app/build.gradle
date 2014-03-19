@@ -1,0 +1,36 @@
+buildscript {
+    dependencies {
+        repositories {
+            mavenCentral()
+        }
+        classpath 'com.jakewharton.hugo:hugo-plugin:1.0.1'
+    }
+}
+
+apply plugin: 'android'
+apply plugin: 'hugo'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "19.0.1"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 19
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':geras-mqtt')
+    compile project(':geras-rest')
+    debugCompile 'com.readystatesoftware.ghostlog:ghostlog-integration:+@aar'
+}

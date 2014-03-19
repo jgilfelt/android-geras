@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.readystatesoftware.android.geras.mqtt" >
+
+    <application android:allowBackup="true" >
+        <service
+            android:name="com.readystatesoftware.android.geras.mqtt.GerasMQTTService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
+    </application>
+
+</manifest>
