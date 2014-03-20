@@ -3,6 +3,10 @@ package com.readystatesoftware.android.geras.mqtt;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -30,11 +34,36 @@ public class GerasMQTTService extends Service implements MqttCallback {
     private static boolean sIsRunning = false;
 
     private NotificationManager mNotificationManager;
+    private SensorManager mSensorManager;
     private Handler mConnectionHandler;
     private HandlerThread mConnectionThread;
     private MqttClient mClient;
     private MqttDefaultFilePersistence mDataStore;
     private String mDeviceId;
+
+    private SensorEventListener mSensorListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(final SensorEvent event) {
+            synchronized (this) {
+                mConnectionHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        String series = "/foo/sensor" + event.sensor.getType();
+                        String value = String.valueOf(event.values[0]);
+                        try {
+                            Log.i(TAG, "pub " + series + ":" + value);
+                            mClient.publish(series, value.getBytes(), 0, false);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                });
+            }
+        }
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+    };
 
     public static boolean isRunning() {
         return sIsRunning;
@@ -46,7 +75,8 @@ public class GerasMQTTService extends Service implements MqttCallback {
         mDeviceId = String.format("an_%s",
                 Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        mConnectionThread= new HandlerThread("mqtt-connection");
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mConnectionThread = new HandlerThread("mqtt-connection");
         mConnectionThread.start();
         mConnectionHandler = new Handler(mConnectionThread.getLooper());
         mDataStore = new MqttDefaultFilePersistence(getCacheDir().getAbsolutePath());
@@ -66,7 +96,7 @@ public class GerasMQTTService extends Service implements MqttCallback {
     public void onDestroy() {
         disconnect();
         removeNotification();
-        mConnectionThread.quit();
+        //mConnectionThread.quit();
         sIsRunning = false;
         super.onDestroy();
     }
@@ -111,7 +141,20 @@ public class GerasMQTTService extends Service implements MqttCallback {
                 try {
                     mClient.connect(opts);
                     mClient.setCallback(GerasMQTTService.this);
-                    mClient.subscribe("/time", 0);
+                    //mClient.subscribe("/time", 0);
+                    mSensorManager.registerListener(
+                            mSensorListener,
+                            mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                            SensorManager.SENSOR_DELAY_NORMAL);
+                    mSensorManager.registerListener(
+                            mSensorListener,
+                            mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT),
+                            SensorManager.SENSOR_DELAY_NORMAL);
+                    mSensorManager.registerListener(
+                            mSensorListener,
+                            mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE),
+                            SensorManager.SENSOR_DELAY_NORMAL);
+
                     Log.i(TAG,"Successfully connected");
                 } catch(MqttException e) {
                     e.printStackTrace();
@@ -122,12 +165,24 @@ public class GerasMQTTService extends Service implements MqttCallback {
     }
 
     private void disconnect() {
+
+        Log.d(TAG, "in disconnect()");
+
+        mSensorManager.unregisterListener(mSensorListener);
+
         if(mClient != null) {
+
+            Log.d(TAG, "mClient != null");
+
             mConnectionHandler.post(new Runnable() {
                 @Override
                 public void run() {
+
+                    Log.d(TAG, "in run()");
+
                     try {
-                        mClient.disconnect();
+                        mClient.disconnect(0);
+                        mClient = null;
                         Log.i(TAG,"Successfully disconnected");
                     } catch(MqttException ex) {
                         ex.printStackTrace();
@@ -153,4 +208,5 @@ public class GerasMQTTService extends Service implements MqttCallback {
     public void deliveryComplete(IMqttDeliveryToken token) {
 
     }
+
 }
