@@ -1,6 +1,9 @@
 package com.readystatesoftware.android.geras.app;
 
 import android.app.Activity;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +24,10 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         final Geras geras = new Geras(getString(R.string.geras_api_key));
+
+        geras.monitorSensor("/android/accelerometer", Sensor.TYPE_ACCELEROMETER, SensorManager.SENSOR_DELAY_NORMAL);
+        geras.monitorSensor("/android/light", Sensor.TYPE_LIGHT, SensorManager.SENSOR_DELAY_NORMAL);
+        geras.monitorSensor("/android/pressure", Sensor.TYPE_PRESSURE, SensorManager.SENSOR_DELAY_NORMAL);
 
         startStop = (Button) findViewById(R.id.startstop);
         startStop.setOnClickListener(new View.OnClickListener() {

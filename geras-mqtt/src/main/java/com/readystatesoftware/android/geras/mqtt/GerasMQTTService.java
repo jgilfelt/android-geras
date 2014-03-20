@@ -21,17 +21,23 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 
 public class GerasMQTTService extends Service implements MqttCallback {
 
     public static final String EXTRA_HOST = "host";
     public static final String EXTRA_API_KEY = "api_key";
+    public static final String EXTRA_SENSOR_MONITORS = "sensor_monitors";
+    public static final String EXTRA_LOCATION_MONTITOR = "location_monitor";
 
     private static final String TAG = "GerasMQTTService";
     private static final int NOTIFICATION_ID = 1138;
 
     private static boolean sIsRunning = false;
+
+    private HashMap<Integer, GerasSensorMonitor> mSensorMap = new HashMap<Integer, GerasSensorMonitor>();
 
     private NotificationManager mNotificationManager;
     private SensorManager mSensorManager;
@@ -43,22 +49,9 @@ public class GerasMQTTService extends Service implements MqttCallback {
 
     private SensorEventListener mSensorListener = new SensorEventListener() {
         @Override
-        public void onSensorChanged(final SensorEvent event) {
+        public void onSensorChanged(SensorEvent event) {
             synchronized (this) {
-                mConnectionHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        String series = "/foo/sensor" + event.sensor.getType();
-                        String value = String.valueOf(event.values[0]);
-                        try {
-                            Log.i(TAG, "pub " + series + ":" + value);
-                            mClient.publish(series, value.getBytes(), 0, false);
-                        } catch (MqttException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                });
+                publishSensorValue(event.sensor.getType(), event.values);
             }
         }
         @Override
@@ -86,6 +79,11 @@ public class GerasMQTTService extends Service implements MqttCallback {
     public int onStartCommand(Intent intent, int flags, int startId) {
         String host = intent.getStringExtra(EXTRA_HOST);
         String apiKey = intent.getStringExtra(EXTRA_API_KEY);
+        ArrayList<GerasSensorMonitor> monitors = intent.getParcelableArrayListExtra(EXTRA_SENSOR_MONITORS);
+        for(GerasSensorMonitor m : monitors) {
+            mSensorMap.put(m.getSensorType(), m);
+        }
+
         sIsRunning = true;
         showNotification();
         connect(host, apiKey);
@@ -142,18 +140,13 @@ public class GerasMQTTService extends Service implements MqttCallback {
                     mClient.connect(opts);
                     mClient.setCallback(GerasMQTTService.this);
                     //mClient.subscribe("/time", 0);
-                    mSensorManager.registerListener(
-                            mSensorListener,
-                            mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                            SensorManager.SENSOR_DELAY_NORMAL);
-                    mSensorManager.registerListener(
-                            mSensorListener,
-                            mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT),
-                            SensorManager.SENSOR_DELAY_NORMAL);
-                    mSensorManager.registerListener(
-                            mSensorListener,
-                            mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE),
-                            SensorManager.SENSOR_DELAY_NORMAL);
+
+                    for(GerasSensorMonitor m : mSensorMap.values()) {
+                        mSensorManager.registerListener(
+                                mSensorListener,
+                                mSensorManager.getDefaultSensor(m.getSensorType()),
+                                m.getRateUs());
+                    }
 
                     Log.i(TAG,"Successfully connected");
                 } catch(MqttException e) {
@@ -164,22 +157,41 @@ public class GerasMQTTService extends Service implements MqttCallback {
 
     }
 
-    private void disconnect() {
-
-        Log.d(TAG, "in disconnect()");
-
-        mSensorManager.unregisterListener(mSensorListener);
-
-        if(mClient != null) {
-
-            Log.d(TAG, "mClient != null");
-
+    private void publishSensorValue(final int sensorType, final float[] values) {
+        if (mClient != null && mClient.isConnected()) {
             mConnectionHandler.post(new Runnable() {
                 @Override
                 public void run() {
+                    GerasSensorMonitor m = mSensorMap.get(sensorType);
+                    if (m != null) {
+                        final String series = m.getSeries();
+                        String value;
+                        if (values.length >= 3) {
+                            // calculate rms
+                            value = String.valueOf(Math.sqrt(values[0] * values[0] +
+                                    values[1] * values[1] +
+                                    values[2] * values[2]));
+                        } else {
+                            value = String.valueOf(values[0]);
+                        }
+                        try {
+                            Log.i(TAG, "pub " + series + ":" + value);
+                            mClient.publish(series, value.getBytes(), 0, false);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+        }
+    }
 
-                    Log.d(TAG, "in run()");
-
+    private void disconnect() {
+        mSensorManager.unregisterListener(mSensorListener);
+        if (mClient != null && mClient.isConnected()) {
+            mConnectionHandler.post(new Runnable() {
+                @Override
+                public void run() {
                     try {
                         mClient.disconnect(0);
                         mClient = null;
