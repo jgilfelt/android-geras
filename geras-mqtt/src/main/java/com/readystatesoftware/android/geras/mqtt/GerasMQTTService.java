@@ -2,16 +2,24 @@ package com.readystatesoftware.android.geras.mqtt;
 
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -25,37 +33,41 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
-public class GerasMQTTService extends Service implements MqttCallback {
+public class GerasMQTTService extends Service implements MqttCallback, SensorEventListener, LocationListener {
 
     public static final String EXTRA_HOST = "host";
     public static final String EXTRA_API_KEY = "api_key";
     public static final String EXTRA_SENSOR_MONITORS = "sensor_monitors";
     public static final String EXTRA_LOCATION_MONTITOR = "location_monitor";
 
+    public static final String ACTION_PUBLISH_DATAPOINT = "publish_datapoint";
+    public static final String EXTRA_DATAPOINT_SERIES = "datapoint_series";
+    public static final String EXTRA_DATAPOINT_VALUE = "datapoint_value";
+
     private static final String TAG = "GerasMQTTService";
     private static final int NOTIFICATION_ID = 1138;
 
     private static boolean sIsRunning = false;
 
-    private HashMap<Integer, GerasSensorMonitor> mSensorMap = new HashMap<Integer, GerasSensorMonitor>();
+    private HashMap<Integer, GerasSensorMonitor> mSensorMonitorMap = new HashMap<Integer, GerasSensorMonitor>();
+    private GerasLocationMonitor mLocationMonitor;
 
     private NotificationManager mNotificationManager;
     private SensorManager mSensorManager;
+    private LocationManager mLocationManager;
     private Handler mConnectionHandler;
     private HandlerThread mConnectionThread;
     private MqttClient mClient;
     private MqttDefaultFilePersistence mDataStore;
     private String mDeviceId;
 
-    private SensorEventListener mSensorListener = new SensorEventListener() {
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
-        public void onSensorChanged(SensorEvent event) {
-            synchronized (this) {
-                publishSensorValue(event.sensor.getType(), event.values);
-            }
+        public void onReceive(Context context, Intent intent) {
+            final String series = intent.getStringExtra(EXTRA_DATAPOINT_SERIES);
+            final String value = intent.getStringExtra(EXTRA_DATAPOINT_VALUE);
+            publishDatapoint(series, value);
         }
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {}
     };
 
     public static boolean isRunning() {
@@ -69,10 +81,15 @@ public class GerasMQTTService extends Service implements MqttCallback {
                 Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mConnectionThread = new HandlerThread("mqtt-connection");
         mConnectionThread.start();
         mConnectionHandler = new Handler(mConnectionThread.getLooper());
         mDataStore = new MqttDefaultFilePersistence(getCacheDir().getAbsolutePath());
+
+        IntentFilter f = new IntentFilter();
+        f.addAction(ACTION_PUBLISH_DATAPOINT);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, f);
     }
 
     @Override
@@ -81,9 +98,9 @@ public class GerasMQTTService extends Service implements MqttCallback {
         String apiKey = intent.getStringExtra(EXTRA_API_KEY);
         ArrayList<GerasSensorMonitor> monitors = intent.getParcelableArrayListExtra(EXTRA_SENSOR_MONITORS);
         for(GerasSensorMonitor m : monitors) {
-            mSensorMap.put(m.getSensorType(), m);
+            mSensorMonitorMap.put(m.getSensorType(), m);
         }
-
+        mLocationMonitor = intent.getParcelableExtra(EXTRA_LOCATION_MONTITOR);
         sIsRunning = true;
         showNotification();
         connect(host, apiKey);
@@ -96,6 +113,7 @@ public class GerasMQTTService extends Service implements MqttCallback {
         removeNotification();
         //mConnectionThread.quit();
         sIsRunning = false;
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
         super.onDestroy();
     }
 
@@ -141,11 +159,23 @@ public class GerasMQTTService extends Service implements MqttCallback {
                     mClient.setCallback(GerasMQTTService.this);
                     //mClient.subscribe("/time", 0);
 
-                    for(GerasSensorMonitor m : mSensorMap.values()) {
+                    for(GerasSensorMonitor m : mSensorMonitorMap.values()) {
                         mSensorManager.registerListener(
-                                mSensorListener,
+                                GerasMQTTService.this,
                                 mSensorManager.getDefaultSensor(m.getSensorType()),
                                 m.getRateUs());
+                    }
+
+                    if (mLocationMonitor != null) {
+                        mLocationManager.requestLocationUpdates(
+                                mLocationMonitor.getProvider(),
+                                mLocationMonitor.getMinTime(),
+                                mLocationMonitor.getMinDistance(),
+                                GerasMQTTService.this);
+                        Location last = mLocationManager.getLastKnownLocation(mLocationMonitor.getProvider());
+                        if (last != null) {
+                            publishLocationValue(last);
+                        }
                     }
 
                     Log.i(TAG,"Successfully connected");
@@ -157,12 +187,28 @@ public class GerasMQTTService extends Service implements MqttCallback {
 
     }
 
+    private void publishDatapoint(final String series, final String value) {
+        if (mClient != null && mClient.isConnected()) {
+            mConnectionHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Log.i(TAG, "pub " + series + ":" + value);
+                        mClient.publish(series, value.getBytes(), 0, false);
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
     private void publishSensorValue(final int sensorType, final float[] values) {
         if (mClient != null && mClient.isConnected()) {
             mConnectionHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    GerasSensorMonitor m = mSensorMap.get(sensorType);
+                    GerasSensorMonitor m = mSensorMonitorMap.get(sensorType);
                     if (m != null) {
                         final String series = m.getSeries();
                         String value;
@@ -186,8 +232,31 @@ public class GerasMQTTService extends Service implements MqttCallback {
         }
     }
 
+    private void publishLocationValue(final Location location) {
+        if (mClient != null && mClient.isConnected()) {
+            mConnectionHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    final String seriesLat = mLocationMonitor.getSeries() + "/latitude";
+                    final String seriesLng = mLocationMonitor.getSeries() + "/longitude";
+                    final String valueLat = String.valueOf(location.getLatitude());
+                    final String valueLng = String.valueOf(location.getLongitude());
+                    try {
+                        Log.i(TAG, "pub " + seriesLat + ":" + valueLat);
+                        Log.i(TAG, "pub " + seriesLng + ":" + valueLng);
+                        mClient.publish(seriesLat, valueLat.getBytes(), 0, false);
+                        mClient.publish(seriesLng, valueLng.getBytes(), 0, false);
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
     private void disconnect() {
-        mSensorManager.unregisterListener(mSensorListener);
+        mSensorManager.unregisterListener(this);
+        mLocationManager.removeUpdates(this);
         if (mClient != null && mClient.isConnected()) {
             mConnectionHandler.post(new Runnable() {
                 @Override
@@ -204,9 +273,11 @@ public class GerasMQTTService extends Service implements MqttCallback {
         }
     }
 
+    // *** MQTT client callbacks ***
+
     @Override
     public void connectionLost(Throwable cause) {
-
+        // TODO implement
     }
 
     @Override
@@ -218,7 +289,42 @@ public class GerasMQTTService extends Service implements MqttCallback {
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
-
+        // ignored
     }
 
+    // *** sensor callbacks ***
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        synchronized (this) {
+            publishSensorValue(event.sensor.getType(), event.values);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // ignored
+    }
+
+    // *** location callbacks ***
+
+    @Override
+    public void onLocationChanged(Location location) {
+        publishLocationValue(location);
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        // ignored
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+        // ignored
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        // ignored
+    }
 }

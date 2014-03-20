@@ -12,16 +12,15 @@ public class GerasSensorMonitor implements Parcelable {
     private int mSensorType;
     private int mRateUs;
 
-    public GerasSensorMonitor(String mSeries, int mSensorType, int mRateUs) {
-        this.mSeries = mSeries;
-        this.mSensorType = mSensorType;
-        this.mRateUs = mRateUs;
+    public GerasSensorMonitor(String series, int sensorType, int rateUs) {
+        this.mSeries = series;
+        this.mSensorType = sensorType;
+        this.mRateUs = rateUs;
     }
 
     public String getSeries() {
         return mSeries;
     }
-
 
     public int getSensorType() {
         return mSensorType;

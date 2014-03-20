@@ -2,9 +2,9 @@ package com.readystatesoftware.android.geras.mqtt;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Created by jgilfelt on 19/03/2014.
@@ -15,6 +15,7 @@ public class Geras {
     private String apiKey;
 
     private ArrayList<GerasSensorMonitor> mSensorMonitors = new ArrayList<GerasSensorMonitor>();
+    private GerasLocationMonitor mLocationMonitor;
 
     public Geras(String apiKey) {
         this.apiKey = apiKey;
@@ -26,11 +27,14 @@ public class Geras {
     }
 
     public void startService(Context context) {
-        Intent intent = new Intent(context, GerasMQTTService.class);
-        intent.putExtra(GerasMQTTService.EXTRA_HOST, host);
-        intent.putExtra(GerasMQTTService.EXTRA_API_KEY, apiKey);
-        intent.putExtra(GerasMQTTService.EXTRA_SENSOR_MONITORS, mSensorMonitors);
-        context.startService(intent);
+        if (!isServiceRunning()) {
+            Intent intent = new Intent(context, GerasMQTTService.class);
+            intent.putExtra(GerasMQTTService.EXTRA_HOST, host);
+            intent.putExtra(GerasMQTTService.EXTRA_API_KEY, apiKey);
+            intent.putExtra(GerasMQTTService.EXTRA_SENSOR_MONITORS, mSensorMonitors);
+            intent.putExtra(GerasMQTTService.EXTRA_LOCATION_MONTITOR, mLocationMonitor);
+            context.startService(intent);
+        }
     }
 
     public void stopService(Context context) {
@@ -38,18 +42,36 @@ public class Geras {
         context.stopService(intent);
     }
 
-    public void publishDatapoint(String series, String message) {
-
+    public boolean isServiceRunning() {
+        return GerasMQTTService.isRunning();
     }
 
-    public void monitorSensor(String series, int sensorType, int rateUs) {
-        GerasSensorMonitor m = new GerasSensorMonitor(series, sensorType, rateUs);
-        mSensorMonitors.add(m);
+    public void publishDatapoint(Context context, String series, String value) {
+        if (isServiceRunning()) {
+            Intent intent = new Intent(GerasMQTTService.ACTION_PUBLISH_DATAPOINT);
+            intent.putExtra(GerasMQTTService.EXTRA_DATAPOINT_SERIES, series);
+            intent.putExtra(GerasMQTTService.EXTRA_DATAPOINT_VALUE, value);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        } else {
+            throw new IllegalStateException("You must call startService() before publishing.");
+        }
     }
 
-    public void monitorLocation(String seriesLat, String seriesLng, String provider, long frequency) {
-
+    public void addSensorMonitor(String series, int sensorType, int rateUs) {
+        if (!isServiceRunning()) {
+            GerasSensorMonitor m = new GerasSensorMonitor(series, sensorType, rateUs);
+            mSensorMonitors.add(m);
+        } else {
+            throw new IllegalStateException("You can only call addSensorMonitor prior to starting the service.");
+        }
     }
 
+    public void setLocationMonitor(String series, String provider, long minTime, float minDistance) {
+        if (!isServiceRunning()) {
+            mLocationMonitor = new GerasLocationMonitor(series, provider, minTime, minDistance);
+        } else {
+            throw new IllegalStateException("You can only call setLocationMonitor prior to starting the service.");
+        }
+    }
 
 }
