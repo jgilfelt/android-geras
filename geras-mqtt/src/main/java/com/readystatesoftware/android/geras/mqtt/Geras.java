@@ -74,4 +74,20 @@ public class Geras {
         }
     }
 
+    public void clearSensorMonitors() {
+        if (!isServiceRunning()) {
+            mSensorMonitors = new ArrayList<GerasSensorMonitor>();
+        } else {
+            throw new IllegalStateException("You can only call clearSensorMonitors prior to starting the service.");
+        }
+    }
+
+    public void clearLocationMonitor() {
+        if (!isServiceRunning()) {
+            mLocationMonitor = null;
+        } else {
+            throw new IllegalStateException("You can only call clearLocationMonitor prior to starting the service.");
+        }
+    }
+
 }

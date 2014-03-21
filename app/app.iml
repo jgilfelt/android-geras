@@ -73,7 +73,10 @@
     <orderEntry type="library" exported="" name="hugo-annotations-1.0.1" level="project" />
     <orderEntry type="library" exported="" name="hugo-runtime-1.0.1" level="project" />
     <orderEntry type="library" exported="" name="support-v13-19.0.1" level="project" />
+    <orderEntry type="library" exported="" name="gson-2.2.4" level="project" />
+    <orderEntry type="library" exported="" name="retrofit-1.4.1" level="project" />
     <orderEntry type="library" exported="" name="ghostlog-integration-1.0.3" level="project" />
+    <orderEntry type="library" exported="" name="okhttp-1.5.2" level="project" />
     <orderEntry type="library" exported="" name="mqtt-client-0.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-v4-19.0.1" level="project" />
     <orderEntry type="library" exported="" name="aspectjrt-1.7.4" level="project" />

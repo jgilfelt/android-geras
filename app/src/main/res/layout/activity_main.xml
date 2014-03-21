@@ -6,19 +6,48 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
+    android:focusableInTouchMode="true"
     tools:context="com.readystatesoftware.android.geras.app.MainActivity">
 
-    <Button
-        android:id="@+id/startstop"
-        android:text="Start/Stop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Series prefix (e.g /foo)"
+        android:id="@+id/prefix"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:inputType="textNoSuggestions"
+        android:paddingBottom="12dp" />
 
-    <Button
-        android:id="@+id/publish"
-        android:text="Publish"
-        android:layout_below="@+id/startstop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/freq"
+        android:layout_below="@+id/prefix"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:paddingBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sensors"
+        android:id="@+id/title"
+        android:layout_below="@+id/freq"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        style="?android:listSeparatorTextViewStyle"/>
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/list"
+        android:layout_below="@+id/title"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:clipToPadding="false"
+        android:scrollbarStyle="outsideOverlay" />
+
+
 
 </RelativeLayout>

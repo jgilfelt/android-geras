@@ -1,9 +1,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.readystatesoftware.android.geras.app.MainActivity" >
-    
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+
+    <item android:id="@+id/action_startstop"
+        android:title="Start/Stop"
+        android:icon="@drawable/ic_action_start"
+        android:showAsAction="always" />
+
+    <item android:id="@+id/action_publish"
+        android:title="Publish battery datapoint"
         android:orderInCategory="100"
         android:showAsAction="never" />
 </menu>

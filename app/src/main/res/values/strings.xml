@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Geras</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_name">android-geras</string>
+
+    <string-array name="freqs">
+        <item>Firehose</item>
+        <item>Normal</item>
+        <item>Low Power</item>
+    </string-array>
 
 </resources>
