@@ -5,7 +5,8 @@ Android realtime sensor feed for the 1248 [Geras][1] IoT time series database.
 
 ![screenshot](https://raw.github.com/jgilfelt/android-geras/master/app/screen.jpg "screenshot")
 
-** NOTE: This project is experimental **
+**NOTE: This project is experimental.**
+
 
 Project Structure
 -----------------
@@ -26,7 +27,28 @@ Example
 -------
 
 ```java
+// Create a Geras MQTT instance using your API key
+GerasMqtt geras = new GerasMqtt("YOUR_GERAS_API_KEY");
 
+// Add sensor monitors
+// Note: sensors that return values in three dimensions will publish the root mean square
+geras.addSensorMonitor("/foo/temperature", Sensor.TYPE_AMBIENT_TEMPERATURE, SensorManager.SENSOR_DELAY_NORMAL);
+geras.addSensorMonitor("/foo/humidity", Sensor.TYPE_RELATIVE_HUMIDITY, SensorManager.SENSOR_DELAY_NORMAL);
+geras.addSensorMonitor("/foo/light", Sensor.TYPE_LIGHT, SensorManager.SENSOR_DELAY_NORMAL);
+
+// Set a location monitor
+// Note: lat/lng coordinates will be published as discrete values
+geras.setLocationMonitor("/foo/location", LocationManager.GPS_PROVIDER, 60, 10);
+
+// Start the service to connect to the broker and start the sensor monitors
+geras.startService(this);
+
+// Publish an ad-hoc datapoint
+// Useful for non-sensor information like microphone PCM data or battery level
+geras.publishDatapoint(this, "foo/battery", String.valueOf(getBatteryLevel()));
+
+// Stop the service
+geras.stopService(this);
 ```
 
 License
