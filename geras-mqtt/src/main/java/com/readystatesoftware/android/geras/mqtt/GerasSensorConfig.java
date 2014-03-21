@@ -6,13 +6,13 @@ import android.os.Parcelable;
 /**
  * Created by jgilfelt on 20/03/2014.
  */
-public class GerasSensorMonitor implements Parcelable {
+public class GerasSensorConfig implements Parcelable {
 
     private String mSeries;
     private int mSensorType;
     private int mRateUs;
 
-    public GerasSensorMonitor(String series, int sensorType, int rateUs) {
+    public GerasSensorConfig(String series, int sensorType, int rateUs) {
         this.mSeries = series;
         this.mSensorType = sensorType;
         this.mRateUs = rateUs;
@@ -30,7 +30,7 @@ public class GerasSensorMonitor implements Parcelable {
         return mRateUs;
     }
 
-    protected GerasSensorMonitor(Parcel in) {
+    protected GerasSensorConfig(Parcel in) {
         mSeries = in.readString();
         mSensorType = in.readInt();
         mRateUs = in.readInt();
@@ -49,15 +49,15 @@ public class GerasSensorMonitor implements Parcelable {
     }
 
     @SuppressWarnings("unused")
-    public static final Parcelable.Creator<GerasSensorMonitor> CREATOR = new Parcelable.Creator<GerasSensorMonitor>() {
+    public static final Parcelable.Creator<GerasSensorConfig> CREATOR = new Parcelable.Creator<GerasSensorConfig>() {
         @Override
-        public GerasSensorMonitor createFromParcel(Parcel in) {
-            return new GerasSensorMonitor(in);
+        public GerasSensorConfig createFromParcel(Parcel in) {
+            return new GerasSensorConfig(in);
         }
 
         @Override
-        public GerasSensorMonitor[] newArray(int size) {
-            return new GerasSensorMonitor[size];
+        public GerasSensorConfig[] newArray(int size) {
+            return new GerasSensorConfig[size];
         }
     };
 }

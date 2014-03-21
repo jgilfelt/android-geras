@@ -11,29 +11,25 @@ import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.readystatesoftware.android.geras.mqtt.Geras;
+import com.readystatesoftware.android.geras.mqtt.GerasMqtt;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-
 public class MainActivity extends Activity {
 
-    private Geras geras;
+    private GerasMqtt geras;
     private SharedPreferences prefs;
     private SensorManager mgr;
     private ArrayAdapter<SensorListData> adapter;
@@ -49,7 +45,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        geras = new Geras(getString(R.string.geras_api_key));
+        geras = new GerasMqtt(getString(R.string.geras_api_key));
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefix = (EditText) findViewById(R.id.prefix);
@@ -58,14 +54,6 @@ public class MainActivity extends Activity {
                 this, R.array.freqs, android.R.layout.simple_spinner_item);
         freqAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         freq.setAdapter(freqAdapter);
-        freq.setOnItemSelectedListener(
-                new AdapterView.OnItemSelectedListener() {
-                    public void onItemSelected(
-                            AdapterView<?> parent, View view, int position, long id) {
-
-                    }
-                    public void onNothingSelected(AdapterView<?> parent) {}
-                });
         mgr = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         title = (TextView) findViewById(R.id.title);
         list = (ListView) findViewById(R.id.list);

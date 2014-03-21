@@ -6,14 +6,14 @@ import android.os.Parcelable;
 /**
  * Created by jgilfelt on 20/03/2014.
  */
-public class GerasLocationMonitor implements Parcelable {
+public class GerasLocationConfig implements Parcelable {
 
     private String mSeries;
     private String mProvider;
     private long mMinTime;
     private float mMinDistance;
 
-    public GerasLocationMonitor(String series, String provider, long minTime, float minDistance) {
+    public GerasLocationConfig(String series, String provider, long minTime, float minDistance) {
         this.mSeries = series;
         this.mProvider = provider;
         this.mMinTime = minTime;
@@ -36,7 +36,7 @@ public class GerasLocationMonitor implements Parcelable {
         return mMinDistance;
     }
 
-    protected GerasLocationMonitor(Parcel in) {
+    protected GerasLocationConfig(Parcel in) {
         mSeries = in.readString();
         mProvider = in.readString();
         mMinTime = in.readLong();
@@ -57,15 +57,15 @@ public class GerasLocationMonitor implements Parcelable {
     }
 
     @SuppressWarnings("unused")
-    public static final Parcelable.Creator<GerasLocationMonitor> CREATOR = new Parcelable.Creator<GerasLocationMonitor>() {
+    public static final Parcelable.Creator<GerasLocationConfig> CREATOR = new Parcelable.Creator<GerasLocationConfig>() {
         @Override
-        public GerasLocationMonitor createFromParcel(Parcel in) {
-            return new GerasLocationMonitor(in);
+        public GerasLocationConfig createFromParcel(Parcel in) {
+            return new GerasLocationConfig(in);
         }
 
         @Override
-        public GerasLocationMonitor[] newArray(int size) {
-            return new GerasLocationMonitor[size];
+        public GerasLocationConfig[] newArray(int size) {
+            return new GerasLocationConfig[size];
         }
     };
 }

@@ -4,7 +4,7 @@
 
     <application android:allowBackup="true" >
         <service
-            android:name="com.readystatesoftware.android.geras.mqtt.GerasMQTTService"
+            android:name=".GerasMqttService"
             android:enabled="true"
             android:exported="false" >
         </service>
