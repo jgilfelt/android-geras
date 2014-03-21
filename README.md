@@ -5,7 +5,7 @@ Android realtime sensor feed for the 1248 [Geras][1] IoT time series database.
 
 ![screenshot](https://raw.github.com/jgilfelt/android-geras/master/app/screen.jpg "screenshot")
 
-**NOTE: This project is experimental.**
+**NOTE: This project is experimental**
 
 
 Project Structure
@@ -21,7 +21,7 @@ Client helpers for SenML and the Geras REST API using Gson, Retrofit and OkHttp.
 
 #### app
 
-Sample Android app that feeds selected [Sensor][2] data to Geras via MQTT at a given series path. Supply your Geras API key [here][3]. A long running service will establish a wake lock and maintain SensorEventListeners and an MQTT broker connection for its duration.
+Android app that feeds selected [Sensor][2] data to Geras via MQTT at a given series path. Supply your Geras API key as a resource [value][3]. A long running service will establish a wake lock and maintain SensorEventListeners and an MQTT broker connection for its duration.
 
 Example
 -------
@@ -45,7 +45,7 @@ geras.startService(this);
 
 // Publish an ad-hoc datapoint
 // Useful for non-sensor information like microphone PCM data or battery level
-geras.publishDatapoint(this, "foo/battery", String.valueOf(getBatteryLevel()));
+geras.publishDatapoint(this, "/foo/battery", String.valueOf(getBatteryLevel()));
 
 // Stop the service
 geras.stopService(this);
