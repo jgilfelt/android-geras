@@ -38,6 +38,7 @@ import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -209,6 +210,7 @@ public class GerasMqttService extends Service implements MqttCallback, SensorEve
                     Log.i(TAG,"Successfully connected");
                 } catch(MqttException e) {
                     e.printStackTrace();
+                    Toast.makeText(GerasMqttService.this, "Connection failed!", Toast.LENGTH_SHORT).show();
                 }
             }
         });

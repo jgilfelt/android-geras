@@ -28,6 +28,7 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +39,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.readystatesoftware.android.geras.mqtt.GerasMqtt;
 
@@ -47,6 +49,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
 
     private GerasMqtt geras;
+    private String apiKey;
     private SharedPreferences prefs;
     private SensorManager mgr;
     private ArrayAdapter<SensorListData> adapter;
@@ -62,9 +65,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        geras = new GerasMqtt(getString(R.string.geras_api_key));
-
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         prefix = (EditText) findViewById(R.id.prefix);
         freq = (Spinner) findViewById(R.id.freq);
         ArrayAdapter<CharSequence> freqAdapter = ArrayAdapter.createFromResource(
@@ -91,10 +93,6 @@ public class MainActivity extends Activity {
         adapter = new SensorListAdapter(this, data);
         list.setAdapter(adapter);
 
-        if (geras.isServiceRunning()) {
-            setUIEnabled(false);
-        }
-
     }
 
     @Override
@@ -107,6 +105,16 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         restoreState();
+
+        apiKey = prefs.getString("api_key", getString(R.string.geras_api_key));
+        String host = prefs.getString("host", "geras.1248.io");
+
+        geras = new GerasMqtt(host, apiKey);
+
+        if (geras.isServiceRunning()) {
+            setUIEnabled(false);
+        }
+
     }
 
     private void prepare() {
@@ -119,7 +127,7 @@ public class MainActivity extends Activity {
         int locationDistance  = 100;
         switch (freq.getSelectedItemPosition()) {
             case 0:
-                sensorRate = SensorManager.SENSOR_DELAY_FASTEST;
+                sensorRate = SensorManager.SENSOR_DELAY_NORMAL; // TODO
                 locationTime = 0;
                 locationDistance = 0;
                 break;
@@ -212,6 +220,12 @@ public class MainActivity extends Activity {
         int id = item.getItemId();
         if (id == R.id.action_startstop) {
             if (!geras.isServiceRunning()) {
+
+                if (TextUtils.isEmpty(apiKey) || apiKey.equals("YOUR_API_KEY")) {
+                    Toast.makeText(this, "Please supply an API key in Settings", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+
                 prepare();
                 geras.startService(MainActivity.this);
                 setUIEnabled(false);
@@ -228,6 +242,9 @@ public class MainActivity extends Activity {
                 geras.publishDatapoint(MainActivity.this, seriesPrefix + "/battery", String.valueOf(getBatteryLevel()));
             }
             return true;
+        } else if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }

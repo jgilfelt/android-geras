@@ -29,6 +29,7 @@ android {
 }
 
 dependencies {
+    compile 'com.android.support:support-v4:+'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':geras-mqtt')
     compile project(':geras-rest')

@@ -11,4 +11,10 @@
         android:title="Publish battery datapoint"
         android:orderInCategory="100"
         android:showAsAction="never" />
+
+    <item android:id="@+id/action_settings"
+        android:title="Settings"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+
 </menu>

@@ -1,0 +1,23 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- NOTE: EditTextPreference accepts EditText attributes. -->
+    <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
+    <EditTextPreference
+        android:key="api_key"
+        android:title="Geras API key"
+        android:defaultValue="@string/geras_api_key"
+        android:selectAllOnFocus="true"
+        android:inputType="textNoSuggestions"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <EditTextPreference
+        android:key="host"
+        android:title="Geras host"
+        android:defaultValue="geras.1248.io"
+        android:selectAllOnFocus="true"
+        android:inputType="textNoSuggestions"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+</PreferenceScreen>
