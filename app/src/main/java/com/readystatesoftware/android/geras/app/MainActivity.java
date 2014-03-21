@@ -9,6 +9,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.SparseBooleanArray;
@@ -134,8 +135,10 @@ public class MainActivity extends Activity {
         prefix.setEnabled(enabled);
         freq.setEnabled(enabled);
         list.setEnabled(enabled);
-        title.setAlpha(enabled ? 1.0f : 0.5f);
-        list.setAlpha(enabled ? 1.0f : 0.5f);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            title.setAlpha(enabled ? 1.0f : 0.5f);
+            list.setAlpha(enabled ? 1.0f : 0.5f);
+        }
     }
 
     private void saveState() {

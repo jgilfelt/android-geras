@@ -1,5 +1,6 @@
 package com.readystatesoftware.android.geras.mqtt;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
@@ -26,14 +27,15 @@ public class GerasMqtt {
         this.host = host;
     }
 
-    public void startService(Context context) {
+    public void startService(Activity activity) {
         if (!isServiceRunning()) {
-            Intent intent = new Intent(context, GerasMqttService.class);
+            Intent intent = new Intent(activity, GerasMqttService.class);
             intent.putExtra(GerasMqttService.EXTRA_HOST, host);
             intent.putExtra(GerasMqttService.EXTRA_API_KEY, apiKey);
             intent.putExtra(GerasMqttService.EXTRA_SENSOR_MONITORS, mSensorMonitors);
             intent.putExtra(GerasMqttService.EXTRA_LOCATION_MONTITOR, mLocationMonitor);
-            context.startService(intent);
+            intent.putExtra(GerasMqttService.EXTRA_NOTIFICATION_TARGET_CLASS, activity.getClass());
+            activity.startService(intent);
         }
     }
 
