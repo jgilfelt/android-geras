@@ -50,7 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
-public class GerasMQTTService2 extends Service implements MqttCallback, SensorEventListener, LocationListener {
+public class GerasMqttService extends Service implements MqttCallback, SensorEventListener, LocationListener {
 
     public static final String EXTRA_HOST = "host";
     public static final String EXTRA_API_KEY = "api_key";
@@ -62,7 +62,7 @@ public class GerasMQTTService2 extends Service implements MqttCallback, SensorEv
     public static final String EXTRA_DATAPOINT_SERIES = "datapoint_series";
     public static final String EXTRA_DATAPOINT_VALUE = "datapoint_value";
 
-    private static final String TAG = "GerasMQTTService2";
+    private static final String TAG = "GerasMqttService";
     private static final int NOTIFICATION_ID = 1138;
 
     private static boolean sIsRunning = false;
@@ -184,12 +184,12 @@ public class GerasMQTTService2 extends Service implements MqttCallback, SensorEv
             public void run() {
                 try {
                     mClient.connect(opts);
-                    mClient.setCallback(GerasMQTTService2.this);
+                    mClient.setCallback(GerasMqttService.this);
                     //mClient.subscribe("/time", 0);
 
                     for(GerasSensorConfig m : mSensorMonitorMap.values()) {
                         mSensorManager.registerListener(
-                                GerasMQTTService2.this,
+                                GerasMqttService.this,
                                 mSensorManager.getDefaultSensor(m.getSensorType()),
                                 m.getRateUs());
                     }
@@ -199,7 +199,7 @@ public class GerasMQTTService2 extends Service implements MqttCallback, SensorEv
                                 mLocationMonitor.getProvider(),
                                 mLocationMonitor.getMinTime(),
                                 mLocationMonitor.getMinDistance(),
-                                GerasMQTTService2.this);
+                                GerasMqttService.this);
                         Location last = mLocationManager.getLastKnownLocation(mLocationMonitor.getProvider());
                         if (last != null) {
                             publishLocationValue(last);

@@ -42,30 +42,30 @@ public class GerasMqtt {
 
     public void startService(Activity activity) {
         if (!isServiceRunning()) {
-            Intent intent = new Intent(activity, GerasMQTTService2.class);
-            intent.putExtra(GerasMQTTService2.EXTRA_HOST, host);
-            intent.putExtra(GerasMQTTService2.EXTRA_API_KEY, apiKey);
-            intent.putExtra(GerasMQTTService2.EXTRA_SENSOR_MONITORS, mSensorMonitors);
-            intent.putExtra(GerasMQTTService2.EXTRA_LOCATION_MONTITOR, mLocationMonitor);
-            intent.putExtra(GerasMQTTService2.EXTRA_NOTIFICATION_TARGET_CLASS, activity.getClass());
+            Intent intent = new Intent(activity, GerasMqttService.class);
+            intent.putExtra(GerasMqttService.EXTRA_HOST, host);
+            intent.putExtra(GerasMqttService.EXTRA_API_KEY, apiKey);
+            intent.putExtra(GerasMqttService.EXTRA_SENSOR_MONITORS, mSensorMonitors);
+            intent.putExtra(GerasMqttService.EXTRA_LOCATION_MONTITOR, mLocationMonitor);
+            intent.putExtra(GerasMqttService.EXTRA_NOTIFICATION_TARGET_CLASS, activity.getClass());
             activity.startService(intent);
         }
     }
 
     public void stopService(Context context) {
-        Intent intent = new Intent(context, GerasMQTTService2.class);
+        Intent intent = new Intent(context, GerasMqttService.class);
         context.stopService(intent);
     }
 
     public boolean isServiceRunning() {
-        return GerasMQTTService2.isRunning();
+        return GerasMqttService.isRunning();
     }
 
     public void publishDatapoint(Context context, String series, String value) {
         if (isServiceRunning()) {
-            Intent intent = new Intent(GerasMQTTService2.ACTION_PUBLISH_DATAPOINT);
-            intent.putExtra(GerasMQTTService2.EXTRA_DATAPOINT_SERIES, series);
-            intent.putExtra(GerasMQTTService2.EXTRA_DATAPOINT_VALUE, value);
+            Intent intent = new Intent(GerasMqttService.ACTION_PUBLISH_DATAPOINT);
+            intent.putExtra(GerasMqttService.EXTRA_DATAPOINT_SERIES, series);
+            intent.putExtra(GerasMqttService.EXTRA_DATAPOINT_VALUE, value);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } else {
             throw new IllegalStateException("You must call startService before publishing.");
