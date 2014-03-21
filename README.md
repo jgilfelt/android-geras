@@ -5,7 +5,7 @@ Android realtime sensor feed for the 1248 [Geras][1] IoT time series database.
 
 ![screenshot](https://raw.github.com/jgilfelt/android-geras/master/app/screen.jpg "screenshot")
 
-**NOTE: This project is experimental **
+** NOTE: This project is experimental **
 
 Project Structure
 -----------------

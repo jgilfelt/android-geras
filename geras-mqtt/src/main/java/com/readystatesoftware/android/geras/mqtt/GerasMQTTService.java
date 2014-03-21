@@ -1,6 +1,7 @@
 package com.readystatesoftware.android.geras.mqtt;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -39,6 +40,7 @@ public class GerasMqttService extends Service implements MqttCallback, SensorEve
     public static final String EXTRA_API_KEY = "api_key";
     public static final String EXTRA_SENSOR_MONITORS = "sensor_monitors";
     public static final String EXTRA_LOCATION_MONTITOR = "location_monitor";
+    public static final String EXTRA_NOTIFICATION_TARGET_CLASS = "target_class";
 
     public static final String ACTION_PUBLISH_DATAPOINT = "publish_datapoint";
     public static final String EXTRA_DATAPOINT_SERIES = "datapoint_series";
@@ -60,6 +62,7 @@ public class GerasMqttService extends Service implements MqttCallback, SensorEve
     private MqttClient mClient;
     private MqttDefaultFilePersistence mDataStore;
     private String mDeviceId;
+    private Class mNotificationTarget;
 
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -101,6 +104,7 @@ public class GerasMqttService extends Service implements MqttCallback, SensorEve
             mSensorMonitorMap.put(m.getSensorType(), m);
         }
         mLocationMonitor = intent.getParcelableExtra(EXTRA_LOCATION_MONTITOR);
+        mNotificationTarget = (Class) intent.getSerializableExtra(EXTRA_NOTIFICATION_TARGET_CLASS);
         sIsRunning = true;
         showNotification();
         connect(host, apiKey);
@@ -124,11 +128,16 @@ public class GerasMqttService extends Service implements MqttCallback, SensorEve
 
     private void showNotification() {
 
+        Intent intent = new Intent(getApplicationContext(), mNotificationTarget);
+        PendingIntent target = PendingIntent.getActivity(getApplicationContext(), 0,
+                intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setOngoing(true)
                 .setContentTitle("Geras MQTT service running")
                 .setContentText("Sensors are active")
-                .setSmallIcon(R.drawable.ic_stat_active);
+                .setSmallIcon(R.drawable.ic_stat_active)
+                .setContentIntent(target);
         // issue the notification
         startForeground(NOTIFICATION_ID, builder.build());
     }
