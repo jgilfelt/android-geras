@@ -205,7 +205,8 @@ public class MainActivity extends Activity {
             return true;
         } else if (id == R.id.action_publish) {
             if (geras.isServiceRunning()) {
-                geras.publishDatapoint(MainActivity.this, "/android/battery", String.valueOf(getBatteryLevel()));
+                String seriesPrefix = prefix.getText().toString();
+                geras.publishDatapoint(MainActivity.this, seriesPrefix + "/battery", String.valueOf(getBatteryLevel()));
             }
             return true;
         }
