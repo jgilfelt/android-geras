@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
-public class GerasMQTTService extends Service implements MqttCallback, SensorEventListener, LocationListener {
+public class GerasMqttService extends Service implements MqttCallback, SensorEventListener, LocationListener {
 
     public static final String EXTRA_HOST = "host";
     public static final String EXTRA_API_KEY = "api_key";
@@ -44,13 +44,13 @@ public class GerasMQTTService extends Service implements MqttCallback, SensorEve
     public static final String EXTRA_DATAPOINT_SERIES = "datapoint_series";
     public static final String EXTRA_DATAPOINT_VALUE = "datapoint_value";
 
-    private static final String TAG = "GerasMQTTService";
+    private static final String TAG = "GerasMqttService";
     private static final int NOTIFICATION_ID = 1138;
 
     private static boolean sIsRunning = false;
 
-    private HashMap<Integer, GerasSensorMonitor> mSensorMonitorMap = new HashMap<Integer, GerasSensorMonitor>();
-    private GerasLocationMonitor mLocationMonitor;
+    private HashMap<Integer, GerasSensorConfig> mSensorMonitorMap = new HashMap<Integer, GerasSensorConfig>();
+    private GerasLocationConfig mLocationMonitor;
 
     private NotificationManager mNotificationManager;
     private SensorManager mSensorManager;
@@ -96,8 +96,8 @@ public class GerasMQTTService extends Service implements MqttCallback, SensorEve
     public int onStartCommand(Intent intent, int flags, int startId) {
         String host = intent.getStringExtra(EXTRA_HOST);
         String apiKey = intent.getStringExtra(EXTRA_API_KEY);
-        ArrayList<GerasSensorMonitor> monitors = intent.getParcelableArrayListExtra(EXTRA_SENSOR_MONITORS);
-        for(GerasSensorMonitor m : monitors) {
+        ArrayList<GerasSensorConfig> monitors = intent.getParcelableArrayListExtra(EXTRA_SENSOR_MONITORS);
+        for(GerasSensorConfig m : monitors) {
             mSensorMonitorMap.put(m.getSensorType(), m);
         }
         mLocationMonitor = intent.getParcelableExtra(EXTRA_LOCATION_MONTITOR);
@@ -123,9 +123,12 @@ public class GerasMQTTService extends Service implements MqttCallback, SensorEve
     }
 
     private void showNotification() {
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setOngoing(true)
-                .setContentTitle("Geras service running");
+                .setContentTitle("Geras MQTT service running")
+                .setContentText("Sensors are active")
+                .setSmallIcon(R.drawable.ic_stat_active);
         // issue the notification
         startForeground(NOTIFICATION_ID, builder.build());
     }
@@ -156,12 +159,12 @@ public class GerasMQTTService extends Service implements MqttCallback, SensorEve
             public void run() {
                 try {
                     mClient.connect(opts);
-                    mClient.setCallback(GerasMQTTService.this);
+                    mClient.setCallback(GerasMqttService.this);
                     //mClient.subscribe("/time", 0);
 
-                    for(GerasSensorMonitor m : mSensorMonitorMap.values()) {
+                    for(GerasSensorConfig m : mSensorMonitorMap.values()) {
                         mSensorManager.registerListener(
-                                GerasMQTTService.this,
+                                GerasMqttService.this,
                                 mSensorManager.getDefaultSensor(m.getSensorType()),
                                 m.getRateUs());
                     }
@@ -171,7 +174,7 @@ public class GerasMQTTService extends Service implements MqttCallback, SensorEve
                                 mLocationMonitor.getProvider(),
                                 mLocationMonitor.getMinTime(),
                                 mLocationMonitor.getMinDistance(),
-                                GerasMQTTService.this);
+                                GerasMqttService.this);
                         Location last = mLocationManager.getLastKnownLocation(mLocationMonitor.getProvider());
                         if (last != null) {
                             publishLocationValue(last);
@@ -208,7 +211,7 @@ public class GerasMQTTService extends Service implements MqttCallback, SensorEve
             mConnectionHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    GerasSensorMonitor m = mSensorMonitorMap.get(sensorType);
+                    GerasSensorConfig m = mSensorMonitorMap.get(sensorType);
                     if (m != null) {
                         final String series = m.getSeries();
                         String value;
